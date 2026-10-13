@@ -1,0 +1,12 @@
+# Vitis HLS / Vivado build output
+*_csynth/
+impl_*/
+*_verilog/
+*.log
+*.jou
+*.dcp
+*.rpt
+.Xil/
+# reference fixtures dumped from model weights
+fixtures/
+*.bin
