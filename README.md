@@ -18,7 +18,8 @@ and the output projection into a single kernel, keeping all intermediates on chi
 | Path | What it is |
 |---|---|
 | `src/official_dsa_decode_v59.cpp` | The kernel. 2022 lines, 247 HLS pragmas. This is what becomes hardware. |
-| `src/official_dsa_decode_v57.hpp` | Shared constants and types (head counts, dimensions, top-k, lane counts). Unchanged since v57. |
+| `src/official_dsa_decode_v57.hpp` | Types and the top-level declaration. Includes `official_dsa_config.hpp`. Unchanged since v57. |
+| `src/official_dsa_config.hpp` | **Not yet in this repository.** Defines `ODSA_INDEX_HEADS` (64), `ODSA_INDEX_DIM` (128), `ODSA_TOPK` (2048), `ODSA_ATTN_HEADS` (16), `ODSA_LATENT_DIM` (512), `ODSA_ROPE_DIM` (64), `ODSA_VALUE_DIM` (128), `ODSA_OUTPUT_SIZE` (2048) and `ODSA_MAX_CONTEXT`. The kernel does not compile without it. |
 | `src/odsa_exp_lut.hpp` | The 256-entry exponential lookup table used by the integer softmax. |
 | `src/test_official_dsa_decode_v59.cpp` | C-simulation testbench. Host-side only, zero HLS pragmas. |
 | `scripts/run_csynth_official_v59.tcl` | Vitis HLS synthesis: target `xcu55c-fsvh2892-2L-e`, 4.0 ns clock, 512-bit AXI widening. |
