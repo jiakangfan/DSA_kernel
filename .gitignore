@@ -10,3 +10,7 @@ impl_*/
 # reference fixtures dumped from model weights
 fixtures/
 *.bin
+
+# fixture build products
+fixture/*.npz
+fixture/official_fixture_*_bin/
