@@ -19,7 +19,7 @@ and the output projection into a single kernel, keeping all intermediates on chi
 |---|---|
 | `src/official_dsa_decode_v59.cpp` | The kernel. 2022 lines, 247 HLS pragmas. This is what becomes hardware. |
 | `src/official_dsa_decode_v57.hpp` | Types and the top-level declaration. Includes `official_dsa_config.hpp`. Unchanged since v57. |
-| `src/official_dsa_config.hpp` | All eleven sizing constants. See **Configuration** below. This is the copy the reported build used (`official_dsa_config.hpp.v59bak` on the build host); see **Provenance**. |
+| `src/official_dsa_config.hpp` | The eleven sizing constants. See **Configuration** below. |
 | `src/odsa_exp_lut.hpp` | The 256-entry exponential lookup table used by the integer softmax. |
 | `src/test_official_dsa_decode_v59.cpp` | C-simulation testbench. Host-side only, zero HLS pragmas. |
 | `scripts/run_csynth_official_v59.tcl` | Vitis HLS synthesis: target `xcu55c-fsvh2892-2L-e`, 4.0 ns clock, 512-bit AXI widening. |
@@ -39,17 +39,20 @@ and the output projection into a single kernel, keeping all intermediates on chi
 |---|---|
 | Indexer | 64 heads x 128 dims, signed INT4 |
 | Selection | exact top-k, k = 2048, deterministic tie breaking |
-| Attention | **16 heads per kernel invocation** x 576 dims (512 latent + 64 positional), signed INT8 |
+| Attention | 16 heads per invocation x 576 dims (512 latent + 64 positional), signed INT8; 8 invocations cover the model's 128 heads |
 | Output projection input | `ODSA_EFFECTIVE_QK` = 576 |
 | Output projection | 512 -> 128 per head |
 | Accumulation | INT32 |
 | Context lengths | 4K, 8K, 16K, 32K, 64K, 128K, batch 1 |
 
-`ODSA_ATTN_HEADS` is **16**, and the attention stage loops over it directly
-(`for head = 0 .. ODSA_ATTN_HEADS`) with no internal grouping -- every attention
-array is sized `[ODSA_ATTN_HEADS][...]`. A model with more heads is covered by
-issuing the kernel once per group of 16. Read the measured numbers below with
-that in mind.
+`ODSA_ATTN_HEADS` is **16**: one kernel invocation covers a group of 16
+attention heads, and the model's 128 heads are covered by issuing the kernel
+**8 times**. The attention stage therefore loops over `ODSA_ATTN_HEADS`
+directly (`for head = 0 .. ODSA_ATTN_HEADS`) and every attention array is
+sized `[ODSA_ATTN_HEADS][...]`; the grouping lives in the invocation schedule
+rather than inside the kernel. Sizing the head datapaths this way is what
+keeps the value projection resident on chip -- 16 heads need 1 MiB, where all
+128 at once would need 8 MiB.
 
 ## Results (U55C, post-route)
 
@@ -127,4 +130,3 @@ Lines worth knowing:
 | 1062-1067 | `DATAFLOW` plus two depth-512 streams: the first counting pass costs no extra cycles. |
 | 747 | `DEPENDENCE ... dependent=false` on the per-lane histograms. |
 | 1023 | The only pipeline in the file with II != 1: the tie-break merge carries a loop dependency on the lane pointers. Its trip count is bounded by the actual deficit rather than the full 2048. |
-
