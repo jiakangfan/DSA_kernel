@@ -39,20 +39,14 @@ and the output projection into a single kernel, keeping all intermediates on chi
 |---|---|
 | Indexer | 64 heads x 128 dims, signed INT4 |
 | Selection | exact top-k, k = 2048, deterministic tie breaking |
-| Attention | 16 heads per invocation x 576 dims (512 latent + 64 positional), signed INT8; 8 invocations cover the model's 128 heads |
-| Output projection input | `ODSA_EFFECTIVE_QK` = 576 |
+| Attention | 128 heads x 576 dims (512 latent + 64 positional), signed INT8 |
+| Physical head datapaths | 16, time-multiplexed over the 128 heads in 8 groups |
 | Output projection | 512 -> 128 per head |
 | Accumulation | INT32 |
 | Context lengths | 4K, 8K, 16K, 32K, 64K, 128K, batch 1 |
 
-`ODSA_ATTN_HEADS` is **16**: one kernel invocation covers a group of 16
-attention heads, and the model's 128 heads are covered by issuing the kernel
-**8 times**. The attention stage therefore loops over `ODSA_ATTN_HEADS`
-directly (`for head = 0 .. ODSA_ATTN_HEADS`) and every attention array is
-sized `[ODSA_ATTN_HEADS][...]`; the grouping lives in the invocation schedule
-rather than inside the kernel. Sizing the head datapaths this way is what
-keeps the value projection resident on chip -- 16 heads need 1 MiB, where all
-128 at once would need 8 MiB.
+`ODSA_ATTN_HEADS` is **16**: one kernel invocation covers 16 attention
+heads, and the model's 128 heads are covered by issuing the kernel 8 times.
 
 ## Results (U55C, post-route)
 
