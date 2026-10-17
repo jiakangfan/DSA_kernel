@@ -128,11 +128,3 @@ Lines worth knowing:
 | 747 | `DEPENDENCE ... dependent=false` on the per-lane histograms. |
 | 1023 | The only pipeline in the file with II != 1: the tie-break merge carries a loop dependency on the lane pointers. Its trip count is bounded by the actual deficit rather than the full 2048. |
 
-## Provenance
-
-The post-route numbers above come from `impl_v59relax`, built 2026-08-17.
-`official_dsa_config.hpp` on the build host was edited two days later
-(2026-08-19) to set `ODSA_ATTN_HEADS = 128`, and the pre-edit copy was kept
-as `official_dsa_config.hpp.v59bak`. **This repository ships the pre-edit
-copy**, because that is what the reported implementation and the checked-in
-pass criteria correspond to. The fixture in `fixture/` regenerates to match it.
